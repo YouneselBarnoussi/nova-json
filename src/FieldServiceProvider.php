@@ -1,6 +1,6 @@
 <?php
 
-namespace R64\NovaJson;
+namespace Barnoussi\NovaJson;
 
 use Laravel\Nova\Nova;
 use Laravel\Nova\Events\ServingNova;

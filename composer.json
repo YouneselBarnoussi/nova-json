@@ -14,13 +14,13 @@
   },
   "autoload": {
     "psr-4": {
-      "R64\\NovaJson\\": "src/"
+      "Barnoussi\\NovaJson\\": "src/"
     }
   },
   "extra": {
     "laravel": {
       "providers": [
-        "R64\\NovaJson\\FieldServiceProvider"
+        "Barnoussi\\NovaJson\\FieldServiceProvider"
       ]
     }
   },

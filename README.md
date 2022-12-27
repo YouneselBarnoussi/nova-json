@@ -15,14 +15,14 @@ This field allows you to group together Nova Fields and merge their key => value
 ### Install
 
 Run this command in your nova project:
-`composer require 64robots/nova-fields`
+`composer require youneselbarnoussi/nova-fields`
 
 ### Add it to your Nova Resource:
 
 Create a new Json field passing an array of Nova Fields as second param
 
 ```php
-use R64\NovaFields\JSON;
+use Barnoussi\NovaFields\JSON;
 
 
 JSON::make('Content', [
@@ -35,7 +35,7 @@ JSON::make('Content', [
 Attribute name can be passed as third param
 
 ```php
-use R64\NovaFields\JSON;
+use Barnoussi\NovaFields\JSON;
 
 
 JSON::make('Content', [
