@@ -1,6 +1,6 @@
 <?php
 
-namespace R64\NovaFields;
+namespace Barnoussi\NovaFields;
 
 use Laravel\Nova\Panel;
 use Laravel\Nova\Fields\Field;
