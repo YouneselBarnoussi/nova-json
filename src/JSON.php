@@ -1,23 +1,46 @@
 <?php
 
-namespace R64\NovaJson;
+namespace R64\NovaFields;
 
-use R64\NovaFields\HasChilds;
+use Laravel\Nova\Panel;
 use Laravel\Nova\Fields\Field;
-use R64\NovaFields\Configurable;
+use Laravel\Nova\Fields\Date;
+use Laravel\Nova\Fields\DateTime;
 use Laravel\Nova\Contracts\Resolvable;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Laravel\Nova\Fields\SupportsDependentFields;
 
 class JSON extends Field
 {
-    use Configurable, HasChilds;
+    use Configurable, HasChilds, SupportsDependentFields;
+
+    /**
+     * The base input classes of the field.
+     *
+     * @var string
+     */
+    public $inputClasses = '';
+
+    /**
+     * The base index classes of the field.
+     *
+     * @var string
+     */
+    public $indexClasses = 'flex';
+
+    /**
+     * The base index classes of the panels title.
+     *
+     * @var string
+     */
+    public $panelTitleClasses = 'text-90 font-normal text-2xl flex-no-shrink py-4';
 
     /**
      * The field's component.
      *
      * @var string
      */
-    public $component = 'nova-json';
+    public $component = 'nova-fields-json';
 
     /**
      * Indicates if the element should be shown on the index view.
@@ -37,6 +60,7 @@ class JSON extends Field
      * Create a new JSON field.
      *
      * @param  string  $name
+     * @param  string  $fields
      * @param  string|null  $attribute
      * @param  mixed|null  $resolveCallback
      * @return void
@@ -45,7 +69,44 @@ class JSON extends Field
     {
         parent::__construct($name, $attribute, $resolveCallback);
 
-        $this->fields = collect($fields);
+        $this->fields = collect();
+
+        foreach ($fields as $field) {
+            if ($field instanceof Panel) {
+                collect($field->data)->each(function ($f) {
+                    $this->fields->push($f);
+                });
+            } else {
+                $this->fields->push($field);
+            }
+        }
+    }
+
+    /**
+     * Set the panel title classes that should be applied instead of default ones.
+     *
+     * @param  string  $classes
+     * @return $this
+     */
+    public function panelTitleClasses($classes)
+    {
+        $this->panelTitleClasses = $classes;
+
+        return $this;
+    }
+
+    /**
+     * Whether the fields within the JSON should be 'flattened'.
+     *
+     * @param bool $value
+     *
+     * @return $this
+     */
+    public function flatten($value = true)
+    {
+        return $this->withMeta([
+            'flatten' => $value
+        ]);
     }
 
     /**
@@ -59,9 +120,21 @@ class JSON extends Field
     {
         $attribute = $attribute ?? $this->attribute;
 
-        $value = $resource->{$attribute};
+        $value = data_get($resource, $attribute);
 
         $this->value = is_object($value) || is_array($value) ? $value : json_decode($value);
+
+        $this->fields->whereInstanceOf(Date::class)->each(function ($dateField) {
+            $dateField->resolveCallback = function ($value) {
+                return \Carbon\Carbon::parse($value)->format('Y-m-d');
+            };
+        });
+
+        $this->fields->whereInstanceOf(DateTime::class)->each(function ($dateField) {
+            $dateField->resolveCallback = function ($value) {
+                return \Carbon\Carbon::parse($value)->format('Y-m-d H:i:s');
+            };
+        });
 
         $this->fields->whereInstanceOf(Resolvable::class)->each->resolve($this->value);
 
@@ -81,13 +154,22 @@ class JSON extends Field
      */
     protected function fillAttributeFromRequest(NovaRequest $request, $requestAttribute, $model, $attribute)
     {
-        $request->merge([
-            $requestAttribute => json_decode($request[$requestAttribute], true)
-        ]);
-
         $this->fields->each(function ($field) use ($request, $model, $attribute) {
-            $field->fillInto($request, $model, $attribute.'->'.$field->attribute, $attribute.'.'.$field->attribute);
+            $field->fillInto($request, $model, $attribute . '->' . $field->attribute, $attribute . '.' . $field->attribute);
         });
+    }
+
+    /**
+     * Generate field-specific validation rules.
+     *
+     * @param  array  $rules
+     * @return array
+     */
+    protected function generateRules($rules)
+    {
+        return collect($rules)->mapWithKeys(function ($rules, $key) {
+            return [$this->attribute . ($key ? '.' . $key : '') => $rules];
+        })->toArray();
     }
 
     /**
@@ -101,12 +183,25 @@ class JSON extends Field
     {
         $attribute = $attribute ?? $this->attribute;
 
-        $value = $resource->{$attribute};
+        $value = data_get($resource, $attribute);
 
         $this->value = is_object($value) || is_array($value) ? $value : json_decode($value);
 
         $this->fields->whereInstanceOf(Resolvable::class)->each->resolveForDisplay($this->value);
 
         parent::resolve($resource, $attribute);
+    }
+
+    /**
+     * Prepare the element for JSON serialization.
+     *
+     * @return array
+     */
+    public function jsonSerialize(): array
+    {
+        return array_merge(parent::jsonSerialize(), [
+            'panelTitleClasses' => $this->panelTitleClasses,
+            'fields' => $this->fields,
+        ]);
     }
 }
