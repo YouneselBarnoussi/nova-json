@@ -1,5 +1,5 @@
 <template>
-  <r64-default-field
+  <barnoussi-default-field
     :field="currentField"
     :hide-label="field.hideLabelInForms"
     :field-classes="field.fieldClasses"
@@ -20,7 +20,7 @@
         :base-classes="field.childConfig"
       />
     </template>
-  </r64-default-field>
+  </barnoussi-default-field>
 </template>
 
 <script>

@@ -1,5 +1,5 @@
 <template>
-  <r64-panel-item
+  <barnoussi-panel-item
     :field="field"
     :hide-label="field.hideLabelInDetail"
     :label-classes="field.panelLabelClasses"
@@ -16,7 +16,7 @@
         :base-classes="f.childConfig"
       />
     </div>
-  </r64-panel-item>
+  </barnoussi-panel-item>
 </template>
 
 <script>
